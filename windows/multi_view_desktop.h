@@ -112,6 +112,9 @@ class MultiViewDesktop {
   bool is_moving_ = false;
 
   HWND GetMainWindow();
+  // Re-reads the DPI of the monitor the window is currently on. Cheap; call
+  // before any conversion between logical and device pixels.
+  void RefreshPixelRatio();
   void ForceRefresh();
   void ForceChildRefresh();
   void SetAsFrameless();

@@ -143,6 +143,9 @@ namespace {
         registered = true;
     }
 
+    // Only correct for the primary monitor, by definition of the origin. Used
+    // solely to size a host window before it exists and can be measured; from
+    // RegisterWindow onwards a window carries its own monitor's ratio.
     double DefaultMonitorScaleFactor() {
         POINT origin = {0, 0};
         HMONITOR monitor =
@@ -681,9 +684,6 @@ void MultiViewDesktop::CreateSecondaryWindow(const flutter::EncodableMap &args) 
 
     RegisterWindow(host_hwnd, flutter_view_id, view_controller);
     auto *window = FindByViewId(flutter_view_id);
-    if (window) {
-        window->pixel_ratio_ = scale;
-    }
     ResizeFlutterContent(window);
     if (window) {
         window->title_bar_style_ = title_bar_style;
@@ -786,7 +786,6 @@ void MultiViewDesktop::CreateModalDialogWindow(
     RegisterWindow(host_hwnd, flutter_view_id, view_controller);
     auto *window = FindByViewId(flutter_view_id);
     if (window) {
-        window->pixel_ratio_ = scale;
         window->is_dialog_ = true;
         window->is_modal_ = is_modal;
         window->modal_owner_view_id_ = is_modal ? parent_id : -1;
@@ -862,6 +861,13 @@ void MultiViewDesktop::CreateModalDialogWindow(
 
 HWND MultiViewDesktop::GetMainWindow() {
     return native_window;
+}
+
+void MultiViewDesktop::RefreshPixelRatio() {
+    if (native_window == nullptr) {
+        return;
+    }
+    pixel_ratio_ = GetDpiForHwnd(native_window) / 96.0;
 }
 
 void MultiViewDesktop::ForceRefresh() {
@@ -1242,6 +1248,7 @@ void MultiViewDesktop::SetBackgroundColor(const flutter::EncodableMap &args) {
 flutter::EncodableMap MultiViewDesktop::GetBounds(
         const flutter::EncodableMap &args) {
     HWND hwnd = GetMainWindow();
+    RefreshPixelRatio();
     const double device_pixel_ratio =
             pixel_ratio_ > 0 ? pixel_ratio_ : GetDpiForHwnd(hwnd) / 96.0;
 
@@ -1262,6 +1269,7 @@ flutter::EncodableMap MultiViewDesktop::GetBounds(
 
 void MultiViewDesktop::SetSize(const flutter::EncodableMap &args) {
     HWND hwnd = GetMainWindow();
+    RefreshPixelRatio();
     const double width = DoubleFromMap(args, "width", 0);
     const double height = DoubleFromMap(args, "height", 0);
     RECT rect{};
@@ -1274,6 +1282,7 @@ void MultiViewDesktop::SetSize(const flutter::EncodableMap &args) {
 
 void MultiViewDesktop::SetPosition(const flutter::EncodableMap &args) {
     HWND hwnd = GetMainWindow();
+    RefreshPixelRatio();
     const double x = DoubleFromMap(args, "x", 0);
     const double y = DoubleFromMap(args, "y", 0);
     RECT rect{};
