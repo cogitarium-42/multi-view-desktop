@@ -102,6 +102,9 @@ namespace multi_view_desktop {
 
         ~MultiViewDesktopPlugin() override;
 
+        // Invoked directly from MultiViewDesktopHandleWindowProc rather than
+        // registered as a top-level delegate: that entry point already runs the
+        // delegate list, so registering here would handle every message twice.
         std::optional <LRESULT> HandleWindowProc(HWND hwnd,
                                                  UINT message,
                                                  WPARAM wparam,
@@ -109,7 +112,6 @@ namespace multi_view_desktop {
 
     private:
         flutter::PluginRegistrarWindows *registrar_;
-        int window_proc_id_ = -1;
         std::unique_ptr <flutter::MethodChannel<flutter::EncodableValue>>
                 screen_retriever_channel_;
 
@@ -156,15 +158,9 @@ namespace multi_view_desktop {
                     HandleScreenRetrieverMethodCall(call, std::move(result));
                 });
         screen_retriever_channel_ = std::move(screen_channel);
-
-        window_proc_id_ = registrar_->RegisterTopLevelWindowProcDelegate(
-                [this](HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
-                    return HandleWindowProc(hwnd, message, wparam, lparam);
-                });
     }
 
     MultiViewDesktopPlugin::~MultiViewDesktopPlugin() {
-        registrar_->UnregisterTopLevelWindowProcDelegate(window_proc_id_);
         if (g_plugin_instance == this) {
             g_plugin_instance = nullptr;
         }
@@ -828,6 +824,34 @@ std::optional <LRESULT> HandleWindowProcForHwnd(HWND hwnd,
     return g_plugin_instance->HandleWindowProc(hwnd, message, wparam, lparam);
 }
 
+// Offers the message to delegates that other plugins registered through
+// PluginRegistrarWindows::RegisterTopLevelWindowProcDelegate.
+//
+// A stock single-view runner does this from its own WndProc via
+// FlutterDesktopViewControllerHandleTopLevelWindowProc. Here the runner owns
+// no view controller, so without this the delegate list is never consulted and
+// plugins that depend on window messages -- global hotkeys, tray icons,
+// protocol activation -- register successfully and then never fire.
+//
+// The delegate list belongs to the engine, not to a view, so any live
+// controller reaches it; hwnd is passed through untouched.
+std::optional <LRESULT> DispatchTopLevelWindowProcDelegates(HWND hwnd,
+                                                            UINT message,
+                                                            WPARAM wparam,
+                                                            LPARAM lparam) {
+    auto &impl = MultiViewDesktop::Instance();
+    MultiViewDesktop *main_window = impl.FindByViewId(impl.main_view_id());
+    if (main_window == nullptr || main_window->controller == nullptr) {
+        return std::nullopt;
+    }
+    LRESULT result = 0;
+    if (FlutterDesktopViewControllerHandleTopLevelWindowProc(
+            main_window->controller, hwnd, message, wparam, lparam, &result)) {
+        return result;
+    }
+    return std::nullopt;
+}
+
 }  // namespace multi_view_desktop
 
 void MultiViewDesktopPluginRegisterWithRegistrar(
@@ -909,6 +933,16 @@ bool MultiViewDesktopHandleWindowProc(HWND hwnd,
                                       WPARAM wparam,
                                       LPARAM lparam,
                                       LRESULT *result) {
+    // Plugin delegates get first refusal, matching the order the stock
+    // single-view runner uses.
+    const auto delegated =
+            multi_view_desktop::DispatchTopLevelWindowProcDelegates(
+                    hwnd, message, wparam, lparam);
+    if (delegated.has_value()) {
+        *result = *delegated;
+        return true;
+    }
+
     const auto optional = multi_view_desktop::HandleWindowProcForHwnd(
             hwnd, message, wparam, lparam);
     if (optional.has_value()) {
