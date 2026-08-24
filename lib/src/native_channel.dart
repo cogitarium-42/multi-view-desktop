@@ -11,6 +11,8 @@ const String kMethodSetSize = 'setSize';
 const String kMethodSetMinimumSize = 'setMinimumSize';
 const String kMethodSetMaximumSize = 'setMaximumSize';
 const String kMethodGetBounds = 'getBounds';
+const String kMethodGetPhysicalBounds = 'getPhysicalBounds';
+const String kMethodSetPhysicalBounds = 'setPhysicalBounds';
 const String kMethodSetPosition = 'setPosition';
 const String kMethodSetBackgroundColor = 'setBackgroundColor';
 const String kMethodSetTitle = 'setTitle';
@@ -198,6 +200,23 @@ class NativeChannel {
       (r['y'] as num).toDouble(),
       (r['width'] as num).toDouble(),
       (r['height'] as num).toDouble(),
+    );
+  }
+
+  Future<Rect> getPhysicalBounds(int viewId) async {
+    final Map<dynamic, dynamic> r = await _staticChannel.invokeMethod(kMethodGetPhysicalBounds, _args(viewId));
+    return Rect.fromLTWH(
+      (r['x'] as num).toDouble(),
+      (r['y'] as num).toDouble(),
+      (r['width'] as num).toDouble(),
+      (r['height'] as num).toDouble(),
+    );
+  }
+
+  Future<void> setPhysicalBounds(int viewId, {required Rect bounds}) async {
+    await _staticChannel.invokeMethod<void>(
+      kMethodSetPhysicalBounds,
+      _args(viewId, {'x': bounds.left, 'y': bounds.top, 'width': bounds.width, 'height': bounds.height}),
     );
   }
 

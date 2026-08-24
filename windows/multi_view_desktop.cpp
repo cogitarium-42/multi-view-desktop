@@ -1294,6 +1294,35 @@ void MultiViewDesktop::SetPosition(const flutter::EncodableMap &args) {
                  SWP_NOZORDER | SWP_NOOWNERZORDER);
 }
 
+flutter::EncodableMap MultiViewDesktop::GetPhysicalBounds() {
+    flutter::EncodableMap result;
+    RECT rect{};
+    if (GetWindowRect(GetMainWindow(), &rect)) {
+        result[flutter::EncodableValue("x")] =
+                flutter::EncodableValue(static_cast<double>(rect.left));
+        result[flutter::EncodableValue("y")] =
+                flutter::EncodableValue(static_cast<double>(rect.top));
+        result[flutter::EncodableValue("width")] =
+                flutter::EncodableValue(static_cast<double>(rect.right - rect.left));
+        result[flutter::EncodableValue("height")] =
+                flutter::EncodableValue(static_cast<double>(rect.bottom - rect.top));
+    }
+    return result;
+}
+
+void MultiViewDesktop::SetPhysicalBounds(const flutter::EncodableMap &args) {
+    HWND hwnd = GetMainWindow();
+    const int x = static_cast<int>(DoubleFromMap(args, "x", 0));
+    const int y = static_cast<int>(DoubleFromMap(args, "y", 0));
+    const int width = static_cast<int>(DoubleFromMap(args, "width", 0));
+    const int height = static_cast<int>(DoubleFromMap(args, "height", 0));
+    // SWP_NOACTIVATE: an overlay must not pull focus away from what it covers.
+    SetWindowPos(hwnd, nullptr, x, y, width, height,
+                 SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
+    // The move may have crossed monitors.
+    RefreshPixelRatio();
+}
+
 void MultiViewDesktop::Center() {
     HWND hwnd = GetMainWindow();
     RECT rect{};

@@ -546,6 +546,11 @@ namespace multi_view_desktop {
         } else if (method == "setPosition") {
             window->SetPosition(args);
             result->Success();
+        } else if (method == "getPhysicalBounds") {
+            result->Success(flutter::EncodableValue(window->GetPhysicalBounds()));
+        } else if (method == "setPhysicalBounds") {
+            window->SetPhysicalBounds(args);
+            result->Success();
         } else if (method == "center") {
             window->Center();
             result->Success();
@@ -702,6 +707,33 @@ static flutter::EncodableMap MwmMonitorToMap(const MwmMonitorData &data) {
     const double w = std::round(data.geometry.right / scale - vis_x);
     const double h = std::round(data.geometry.bottom / scale - vis_y);
 
+    // The scaled values above divide each monitor by its own factor, so they
+    // do not form one coherent space across displays. These do.
+    const flutter::EncodableMap physical_bounds{
+            {flutter::EncodableValue("x"),
+                    flutter::EncodableValue(static_cast<double>(data.geometry.left))},
+            {flutter::EncodableValue("y"),
+                    flutter::EncodableValue(static_cast<double>(data.geometry.top))},
+            {flutter::EncodableValue("width"),
+                    flutter::EncodableValue(static_cast<double>(
+                            data.geometry.right - data.geometry.left))},
+            {flutter::EncodableValue("height"),
+                    flutter::EncodableValue(static_cast<double>(
+                            data.geometry.bottom - data.geometry.top))},
+    };
+    const flutter::EncodableMap physical_work_area{
+            {flutter::EncodableValue("x"),
+                    flutter::EncodableValue(static_cast<double>(data.workarea.left))},
+            {flutter::EncodableValue("y"),
+                    flutter::EncodableValue(static_cast<double>(data.workarea.top))},
+            {flutter::EncodableValue("width"),
+                    flutter::EncodableValue(static_cast<double>(
+                            data.workarea.right - data.workarea.left))},
+            {flutter::EncodableValue("height"),
+                    flutter::EncodableValue(static_cast<double>(
+                            data.workarea.bottom - data.workarea.top))},
+    };
+
     std::string name;
     std::string id;
     MONITORINFOEX info_ex;
@@ -755,6 +787,13 @@ static flutter::EncodableMap MwmMonitorToMap(const MwmMonitorData &data) {
                                                                      vis_h)},
                                                      })},
             {flutter::EncodableValue("scaleFactor"), flutter::EncodableValue(scale)},
+            {flutter::EncodableValue("physicalBounds"),
+                                                     flutter::EncodableValue(physical_bounds)},
+            {flutter::EncodableValue("physicalWorkArea"),
+                                                     flutter::EncodableValue(physical_work_area)},
+            {flutter::EncodableValue("dpi"),
+                                                     flutter::EncodableValue(static_cast<double>(
+                                                             MwmGetDpiForMonitor(data.handle)))},
     };
 }
 

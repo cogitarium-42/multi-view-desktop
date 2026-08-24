@@ -10,10 +10,11 @@ import 'screen_listener.dart';
 export 'display.dart';
 export 'screen_listener.dart';
 
-/// Queries connected displays and cursor position via native macOS APIs.
+/// Queries connected displays and cursor position.
 ///
-/// Coordinates are in Flutter logical space (Y-down, origin at primary top-left).
-@internal
+/// Coordinates are in Flutter logical space (Y-down, origin at primary
+/// top-left), except `Display.physicalBounds` and friends, which are raw
+/// device pixels.
 class ScreenRetriever {
   ScreenRetriever._();
 

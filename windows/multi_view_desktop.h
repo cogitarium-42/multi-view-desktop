@@ -143,6 +143,12 @@ class MultiViewDesktop {
   flutter::EncodableMap GetBounds(const flutter::EncodableMap& args);
   void SetSize(const flutter::EncodableMap& args);
   void SetPosition(const flutter::EncodableMap& args);
+  // Device pixels in virtual-desktop coordinates, unscaled. Logical
+  // coordinates have no consistent meaning across monitors of differing
+  // scale, so callers needing an exact rect -- an overlay covering one
+  // display, say -- use these instead of SetSize/SetPosition.
+  flutter::EncodableMap GetPhysicalBounds();
+  void SetPhysicalBounds(const flutter::EncodableMap& args);
   void Center();
   void SetMinimumSize(const flutter::EncodableMap& args);
   void SetMaximumSize(const flutter::EncodableMap& args);

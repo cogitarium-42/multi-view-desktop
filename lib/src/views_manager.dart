@@ -83,6 +83,10 @@ abstract class ViewsManager {
 
   Future<void> setPosition(int viewId, Offset position);
 
+  Future<Rect> getPhysicalBounds(int viewId);
+
+  Future<void> setPhysicalBounds(int viewId, Rect bounds);
+
   Future<void> center(int viewId);
 
   Future<void> setAlignment(int viewId, Alignment alignment, {bool insideParent = false});

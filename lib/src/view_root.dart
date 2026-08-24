@@ -1569,6 +1569,16 @@ class _ViewsManagerImpl implements ViewsManager {
   }
 
   @override
+  Future<Rect> getPhysicalBounds(int viewId) async {
+    return await _viewExistChecker(
+          viewId,
+          () async => await _nativeChannel.getPhysicalBounds(viewId),
+          dialogSupports: true,
+        ) ??
+        Rect.zero;
+  }
+
+  @override
   Future<Offset> getPosition(int viewId) async {
     return await _viewExistChecker(
           viewId,
@@ -1972,6 +1982,15 @@ class _ViewsManagerImpl implements ViewsManager {
   @override
   Future<void> setOpacity(int viewId, double opacity) async {
     await _viewExistChecker(viewId, () async => await _nativeChannel.setOpacity(viewId, opacity), dialogSupports: true);
+  }
+
+  @override
+  Future<void> setPhysicalBounds(int viewId, Rect bounds) async {
+    await _viewExistChecker(
+      viewId,
+      () async => await _nativeChannel.setPhysicalBounds(viewId, bounds: bounds),
+      dialogSupports: true,
+    );
   }
 
   @override

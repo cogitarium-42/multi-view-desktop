@@ -9,6 +9,9 @@ class Display {
     this.visiblePosition,
     this.visibleSize,
     this.scaleFactor,
+    this.physicalBounds,
+    this.physicalWorkArea,
+    this.dpi,
   });
 
   factory Display.fromJson(Map<String, dynamic> json) {
@@ -27,6 +30,19 @@ class Display {
           ? Size((visibleSizeMap['width'] as num).toDouble(), (visibleSizeMap['height'] as num).toDouble())
           : null,
       scaleFactor: json['scaleFactor'] as num?,
+      physicalBounds: _rectFromJson(json['physicalBounds']),
+      physicalWorkArea: _rectFromJson(json['physicalWorkArea']),
+      dpi: json['dpi'] as num?,
+    );
+  }
+
+  static Rect? _rectFromJson(Object? value) {
+    if (value is! Map) return null;
+    return Rect.fromLTWH(
+      (value['x'] as num).toDouble(),
+      (value['y'] as num).toDouble(),
+      (value['width'] as num).toDouble(),
+      (value['height'] as num).toDouble(),
     );
   }
 
@@ -48,4 +64,19 @@ class Display {
 
   /// The scale factor of the display.
   final num? scaleFactor;
+
+  /// The display's rectangle in device pixels, in virtual-desktop coordinates.
+  ///
+  /// Unlike [visiblePosition] and [size], which divide each display by its own
+  /// scale factor, these form one coherent space across displays. Pass to
+  /// `MultiViewDesktop.setPhysicalBounds` to cover a display exactly.
+  ///
+  /// Windows only; null elsewhere.
+  final Rect? physicalBounds;
+
+  /// [physicalBounds] minus the taskbar and other appbars. Windows only.
+  final Rect? physicalWorkArea;
+
+  /// The display's raw DPI, 96 being unscaled. Windows only.
+  final num? dpi;
 }

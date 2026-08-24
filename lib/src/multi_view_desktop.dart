@@ -376,6 +376,25 @@ class MultiViewDesktop {
     await _manager.setPosition(_realId, position);
   }
 
+  /// Returns the window frame in device pixels, in virtual-desktop
+  /// coordinates. Windows only.
+  Future<Rect> getPhysicalBounds() async {
+    return await _manager.getPhysicalBounds(_realId);
+  }
+
+  /// Moves and resizes the window to an exact device-pixel rect, bypassing
+  /// logical-pixel scaling entirely. Windows only.
+  ///
+  /// Use this rather than [setSize] / [setPosition] when the rect must land
+  /// precisely -- covering one display, for instance. Logical coordinates are
+  /// divided by a single monitor's scale factor, so they cannot address a
+  /// display whose scale differs. See [Display.physicalBounds].
+  ///
+  /// Does not activate the window.
+  Future<void> setPhysicalBounds(Rect bounds) async {
+    await _manager.setPhysicalBounds(_realId, bounds);
+  }
+
   /// Centers the window on the screen that contains the largest portion of it.
   Future<void> center() async {
     await _manager.center(_realId);
