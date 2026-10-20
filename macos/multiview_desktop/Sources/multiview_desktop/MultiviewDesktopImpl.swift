@@ -1037,7 +1037,7 @@ class MultiviewDesktopImpl: NSObject, NSWindowDelegate {
         case "setAsFrameless":
             window.styleMask.insert(.fullSizeContentView)
             window.titleVisibility = .hidden
-            window.isOpaque = true
+            window.isOpaque = false
             window.hasShadow = false
             window.backgroundColor = NSColor.clear
 

@@ -413,7 +413,7 @@ public func mvdSetAsFrameless(_ viewId: Int64) {
     guard let window = win(viewId) else { return }
     window.styleMask.insert(.fullSizeContentView)
     window.titleVisibility = .hidden
-    window.isOpaque = true
+    window.isOpaque = false
     window.hasShadow = false
     window.backgroundColor = NSColor.clear
     if window.styleMask.contains(.titled),
