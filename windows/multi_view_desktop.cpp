@@ -1172,6 +1172,8 @@ void MultiViewDesktop::SetAsFrameless() {
                  rect.bottom - rect.top,
                  SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE |
                  SWP_FRAMECHANGED);
+    // The background color was applied while the window still had a frame.
+    ApplyWindowComposition();
 }
 
 void MultiViewDesktop::Close() {
@@ -1428,7 +1430,8 @@ void MultiViewDesktop::ApplyWindowComposition() {
     const bool has_caption =
             (GetWindowLong(hWnd, GWL_STYLE) & WS_CAPTION) != 0;
     const bool use_accent =
-            is_popup_ || !has_caption || title_bar_style_ == "hidden";
+            is_popup_ || is_frameless_ || !has_caption ||
+            title_bar_style_ == "hidden";
 
     const HINSTANCE hModule = LoadLibrary(TEXT("user32.dll"));
     if (!hModule) {
