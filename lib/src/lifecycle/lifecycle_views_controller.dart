@@ -233,7 +233,7 @@ class LifecycleViewsController {
       Duration(milliseconds: timeoutMs),
       onTimeout: () {
         MvdLog.instance.error('create', 'first frame timeout', {'realId': viewId, 'timeoutMs': timeoutMs});
-        createCompleters[viewId]?.complete(CreateViewError.timeout.code);
+        createCompleters.remove(viewId)?.complete(CreateViewError.timeout.code);
         return CreateViewError.timeout.code;
       },
     );
