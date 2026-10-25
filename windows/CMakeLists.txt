@@ -15,6 +15,8 @@ add_library(${PLUGIN_NAME} SHARED
   "mvd_windows_screen.h"
   "mvd_windows_taskbar_menu.cpp"
   "mvd_windows_taskbar_menu.h"
+  "mvd_windows_view_resize.cpp"
+  "mvd_windows_view_resize.h"
 )
 apply_standard_settings(${PLUGIN_NAME})
 set_target_properties(${PLUGIN_NAME} PROPERTIES

@@ -18,6 +18,7 @@
 #include "multi_view_desktop.h"
 #include "mvd_windows_screen.h"
 #include "mvd_windows_taskbar_menu.h"
+#include "mvd_windows_view_resize.h"
 
 #pragma comment(lib, "dwmapi.lib")
 #pragma comment(lib, "user32.lib")
@@ -574,6 +575,21 @@ void MultiViewDesktop::SetupChannel(flutter::BinaryMessenger *messenger) {
             messenger, "multiview_desktop", &flutter::StandardMethodCodec::GetInstance());
 }
 
+namespace {
+
+// A view without a host window is itself the top-level window; nothing sizes
+// it to a parent.
+void DeferHostedViewResizes(HWND host,
+                            FlutterDesktopViewControllerRef controller) {
+    HWND view = FlutterDesktopViewGetHWND(
+            FlutterDesktopViewControllerGetView(controller));
+    if (view != host) {
+        MvdWindowsDeferViewResizesInDartCalls(view);
+    }
+}
+
+}  // namespace
+
 void MultiViewDesktop::RegisterMain(HWND window,
                                     int64_t flutter_view_id,
                                     FlutterDesktopViewControllerRef view_controller) {
@@ -585,6 +601,7 @@ void MultiViewDesktop::RegisterMain(HWND window,
     windows_[flutter_view_id] = std::move(entry);
     main_view_id_ = flutter_view_id;
     MvdWindowsApplyAppUserModelIdToWindow(window);
+    DeferHostedViewResizes(window, view_controller);
 }
 
 void MultiViewDesktop::RegisterWindow(HWND window,
@@ -597,6 +614,7 @@ void MultiViewDesktop::RegisterWindow(HWND window,
     entry->pixel_ratio_ = GetDpiForHwnd(window) / 96.0;
     windows_[flutter_view_id] = std::move(entry);
     MvdWindowsApplyAppUserModelIdToWindow(window);
+    DeferHostedViewResizes(window, view_controller);
 }
 
 MultiViewDesktop *MultiViewDesktop::FindByViewId(int64_t target_view_id) {

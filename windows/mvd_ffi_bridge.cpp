@@ -5,6 +5,7 @@
 #include "multi_view_desktop.h"
 #include "mvd_windows_taskbar_menu.h"
 #include "mvd_windows_screen.h"
+#include "mvd_windows_view_resize.h"
 
 #include <algorithm>
 #include <cmath>
@@ -98,6 +99,8 @@ BOOL CALLBACK EnumMonitorsForDisplayRect(HMONITOR monitor, HDC, LPRECT,
   return TRUE;
 }
 
+using multi_view_desktop::MvdDartCallScope;
+
 using EV = flutter::EncodableValue;
 using EM = flutter::EncodableMap;
 
@@ -169,6 +172,7 @@ FLUTTER_PLUGIN_EXPORT int64_t mvd_create_window(int64_t token, double w, double 
                                              int32_t buttons, int32_t has_pos,
                                              double x, double y,
                                              int64_t parent_id) {
+  const MvdDartCallScope dart_call;
   EM args = {
       {EV("token"), EV(token)},
       {EV("width"), EV(w)},
@@ -189,6 +193,7 @@ FLUTTER_PLUGIN_EXPORT int64_t mvd_create_window(int64_t token, double w, double 
 FLUTTER_PLUGIN_EXPORT int64_t mvd_create_modal_dialog(
     int64_t token, int64_t parent_id, double w, double h, int32_t modal,
     int32_t buttons, int32_t has_pos, double x, double y) {
+  const MvdDartCallScope dart_call;
   EM args = {
       {EV("token"), EV(token)},
       {EV("parentId"), EV(parent_id)},
@@ -206,11 +211,13 @@ FLUTTER_PLUGIN_EXPORT int64_t mvd_create_modal_dialog(
 }
 
 FLUTTER_PLUGIN_EXPORT void mvd_complete_modal_dialog(int64_t view_id) {
+  const MvdDartCallScope dart_call;
   multi_view_desktop::MultiViewDesktop::Instance().CompleteModalDialog(view_id);
 }
 
 FLUTTER_PLUGIN_EXPORT int64_t mvd_create_popup(int64_t token, int64_t parent_id,
                                             double w, double h) {
+  const MvdDartCallScope dart_call;
   EM args = {
       {EV("token"), EV(token)},
       {EV("parentId"), EV(parent_id)},
@@ -250,6 +257,7 @@ FLUTTER_PLUGIN_EXPORT int32_t mvd_is_hide_app_from_taskbar() {
 }
 
 FLUTTER_PLUGIN_EXPORT void mvd_set_progress_bar(double progress) {
+  const MvdDartCallScope dart_call;
   auto& impl = multi_view_desktop::MultiViewDesktop::Instance();
   auto* window = impl.FindByViewId(impl.main_view_id());
   if (!window) {
@@ -268,6 +276,7 @@ FLUTTER_PLUGIN_EXPORT void mvd_set_progress_bar(double progress) {
 FLUTTER_PLUGIN_EXPORT void mvd_taskbar_menu_clear() { g_pending_menu.clear(); }
 
 FLUTTER_PLUGIN_EXPORT void mvd_taskbar_menu_add(int32_t id) {
+  const MvdDartCallScope dart_call;
   EM item = {{EV("id"), EV(id)}, {EV("title"), EV(std::string(g_str_buf))}};
   if (g_str_buf2[0] != 0) {
     item[EV("icon")] = EV(std::string(g_str_buf2));
@@ -276,6 +285,7 @@ FLUTTER_PLUGIN_EXPORT void mvd_taskbar_menu_add(int32_t id) {
 }
 
 FLUTTER_PLUGIN_EXPORT void mvd_taskbar_menu_commit() {
+  const MvdDartCallScope dart_call;
   EV list(g_pending_menu);
   multi_view_desktop::MvdWindowsSetTaskbarMenu(&list);
   g_pending_menu.clear();
@@ -302,6 +312,7 @@ FLUTTER_PLUGIN_EXPORT void mvd_get_frame(int64_t view_id) {
 
 FLUTTER_PLUGIN_EXPORT void mvd_set_frame(int64_t view_id, double x, double y,
                                          double w, double h) {
+  const MvdDartCallScope dart_call;
   auto* window = Win(view_id);
   if (!window) {
     return;
@@ -335,6 +346,7 @@ FLUTTER_PLUGIN_EXPORT void mvd_get_physical_frame(int64_t view_id) {
 FLUTTER_PLUGIN_EXPORT void mvd_set_physical_frame(int64_t view_id, double x,
                                                   double y, double w,
                                                   double h) {
+  const MvdDartCallScope dart_call;
   auto* window = Win(view_id);
   if (!window) {
     return;
@@ -374,13 +386,16 @@ FLUTTER_PLUGIN_EXPORT void mvd_get_display_rect(double x, double y, double w,
 }
 
 FLUTTER_PLUGIN_EXPORT void mvd_set_size(int64_t id, double w, double h) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id)) window->SetSize(SizeArgs(w, h));
 }
 FLUTTER_PLUGIN_EXPORT void mvd_set_position(int64_t id, double x, double y) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id))
     window->SetPosition(EM{{EV("x"), EV(x)}, {EV("y"), EV(y)}});
 }
 FLUTTER_PLUGIN_EXPORT void mvd_set_min_size(int64_t id, double w, double h) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id)) window->SetMinimumSize(SizeArgs(w, h));
 }
 FLUTTER_PLUGIN_EXPORT void mvd_get_min_size(int64_t id) {
@@ -395,6 +410,7 @@ FLUTTER_PLUGIN_EXPORT void mvd_get_min_size(int64_t id) {
   g_rect_buf[3] = 0;
 }
 FLUTTER_PLUGIN_EXPORT void mvd_set_max_size(int64_t id, double w, double h) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id)) window->SetMaximumSize(SizeArgs(w, h));
 }
 FLUTTER_PLUGIN_EXPORT void mvd_get_max_size(int64_t id) {
@@ -412,6 +428,7 @@ FLUTTER_PLUGIN_EXPORT void mvd_get_max_size(int64_t id) {
 FLUTTER_PLUGIN_EXPORT void mvd_set_background_color(int64_t id, int32_t a,
                                                     int32_t r, int32_t g,
                                                     int32_t b) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id))
     window->SetBackgroundColor(EM{
         {EV("backgroundColorA"), EV(a)},
@@ -422,6 +439,7 @@ FLUTTER_PLUGIN_EXPORT void mvd_set_background_color(int64_t id, int32_t a,
 }
 
 FLUTTER_PLUGIN_EXPORT void mvd_set_title(int64_t id) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id))
     window->SetTitle(M("title", EV(std::string(g_str_buf))));
 }
@@ -437,6 +455,7 @@ FLUTTER_PLUGIN_EXPORT int32_t mvd_get_title(int64_t id) {
 
 FLUTTER_PLUGIN_EXPORT void mvd_set_title_bar_style(int64_t id, int32_t close_v,
                                                    int32_t, int32_t) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id))
     window->SetTitleBarStyle(EM{
         {EV("titleBarStyle"), EV(std::string(g_str_buf))},
@@ -467,9 +486,11 @@ FLUTTER_PLUGIN_EXPORT int32_t mvd_get_title_bar_style(int64_t id) {
 }
 
 FLUTTER_PLUGIN_EXPORT void mvd_set_as_frameless(int64_t id) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id)) window->SetAsFrameless();
 }
 FLUTTER_PLUGIN_EXPORT void mvd_set_always_on_top(int64_t id, int32_t v) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id))
     window->SetAlwaysOnTop(M("isAlwaysOnTop", EV(v != 0)));
 }
@@ -478,6 +499,7 @@ FLUTTER_PLUGIN_EXPORT int32_t mvd_is_always_on_top(int64_t id) {
   return window && window->IsAlwaysOnTop() ? 1 : 0;
 }
 FLUTTER_PLUGIN_EXPORT void mvd_set_full_screen(int64_t id, int32_t v) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id))
     window->SetFullScreen(M("isFullScreen", EV(v != 0)));
 }
@@ -486,6 +508,7 @@ FLUTTER_PLUGIN_EXPORT int32_t mvd_is_full_screen(int64_t id) {
   return window && window->IsFullScreen() ? 1 : 0;
 }
 FLUTTER_PLUGIN_EXPORT void mvd_hide_app_from_taskbar(int64_t id, int32_t v) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id))
     window->SetSkipTaskbar(M("isHideAppFromTaskbar", EV(v != 0)));
 }
@@ -494,26 +517,33 @@ FLUTTER_PLUGIN_EXPORT int32_t mvd_is_hide_app_tab_from_taskbar(int64_t id) {
   return window && window->IsSkipTaskbar() ? 1 : 0;
 }
 FLUTTER_PLUGIN_EXPORT void mvd_close_window(int64_t id) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id)) window->Close();
 }
 FLUTTER_PLUGIN_EXPORT void mvd_destroy_window(int64_t id) {
+  const MvdDartCallScope dart_call;
   multi_view_desktop::MultiViewDesktop::Instance().DestroyEntry(id);
 }
 FLUTTER_PLUGIN_EXPORT void mvd_focus(int64_t id) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id)) window->Focus();
 }
 FLUTTER_PLUGIN_EXPORT void mvd_blur(int64_t id) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id)) window->Blur();
 }
 FLUTTER_PLUGIN_EXPORT void mvd_set_pre_confirm(int64_t id, int32_t v) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id))
     window->SetPreConfirmClose(M("preConfirmClose", EV(v != 0)));
 }
 FLUTTER_PLUGIN_EXPORT void mvd_set_confirm(int64_t id, int32_t v) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id))
     window->SetConfirmClose(M("confirmClose", EV(v != 0)));
 }
 FLUTTER_PLUGIN_EXPORT void mvd_set_prevent_close(int64_t id, int32_t v) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id))
     window->SetPreventClose(M("isPreventClose", EV(v != 0)));
 }
@@ -522,10 +552,12 @@ FLUTTER_PLUGIN_EXPORT int32_t mvd_is_prevent_close(int64_t id) {
   return window && window->IsPreventClose() ? 1 : 0;
 }
 FLUTTER_PLUGIN_EXPORT void mvd_set_brightness(int64_t id) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id))
     window->SetBrightness(M("brightness", EV(std::string(g_str_buf))));
 }
 FLUTTER_PLUGIN_EXPORT void mvd_set_opacity(int64_t id, double o) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id)) window->SetOpacity(M("opacity", EV(o)));
 }
 FLUTTER_PLUGIN_EXPORT double mvd_get_opacity(int64_t id) {
@@ -537,15 +569,19 @@ FLUTTER_PLUGIN_EXPORT int32_t mvd_has_shadow(int64_t id) {
   return !window || window->HasShadow() ? 1 : 0;
 }
 FLUTTER_PLUGIN_EXPORT void mvd_set_has_shadow(int64_t id, int32_t v) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id)) window->SetHasShadow(M("hasShadow", EV(v != 0)));
 }
 FLUTTER_PLUGIN_EXPORT void mvd_set_aspect_ratio(int64_t id, double r) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id)) window->SetAspectRatio(M("aspectRatio", EV(r)));
 }
 FLUTTER_PLUGIN_EXPORT void mvd_show(int64_t id) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id)) window->Show();
 }
 FLUTTER_PLUGIN_EXPORT void mvd_hide(int64_t id) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id)) window->Hide();
 }
 FLUTTER_PLUGIN_EXPORT int32_t mvd_is_visible(int64_t id) {
@@ -558,10 +594,12 @@ FLUTTER_PLUGIN_EXPORT int32_t mvd_is_focused(int64_t id) {
 }
 FLUTTER_PLUGIN_EXPORT int32_t mvd_is_on_active_space(int64_t) { return 1; }
 FLUTTER_PLUGIN_EXPORT void mvd_maximize(int64_t id, int32_t vertically) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id))
     window->Maximize(M("vertically", EV(vertically != 0)));
 }
 FLUTTER_PLUGIN_EXPORT void mvd_unmaximize(int64_t id) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id)) window->Unmaximize();
 }
 FLUTTER_PLUGIN_EXPORT int32_t mvd_is_maximized(int64_t id) {
@@ -569,9 +607,11 @@ FLUTTER_PLUGIN_EXPORT int32_t mvd_is_maximized(int64_t id) {
   return window && window->IsMaximized() ? 1 : 0;
 }
 FLUTTER_PLUGIN_EXPORT void mvd_minimize(int64_t id) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id)) window->Minimize();
 }
 FLUTTER_PLUGIN_EXPORT void mvd_restore(int64_t id) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id)) window->Restore();
 }
 FLUTTER_PLUGIN_EXPORT int32_t mvd_is_minimized(int64_t id) {
@@ -583,6 +623,7 @@ FLUTTER_PLUGIN_EXPORT int32_t mvd_is_resizable(int64_t id) {
   return !window || window->IsResizable() ? 1 : 0;
 }
 FLUTTER_PLUGIN_EXPORT void mvd_set_resizable(int64_t id, int32_t v) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id))
     window->SetResizable(M("isResizable", EV(v != 0)));
 }
@@ -591,6 +632,7 @@ FLUTTER_PLUGIN_EXPORT int32_t mvd_is_movable(int64_t id) {
   return !window || window->IsMovable() ? 1 : 0;
 }
 FLUTTER_PLUGIN_EXPORT void mvd_set_movable(int64_t id, int32_t v) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id)) window->SetMovable(M("isMovable", EV(v != 0)));
 }
 FLUTTER_PLUGIN_EXPORT int32_t mvd_is_minimizable(int64_t id) {
@@ -598,6 +640,7 @@ FLUTTER_PLUGIN_EXPORT int32_t mvd_is_minimizable(int64_t id) {
   return !window || window->IsMinimizable() ? 1 : 0;
 }
 FLUTTER_PLUGIN_EXPORT void mvd_set_minimizable(int64_t id, int32_t v) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id))
     window->SetMinimizable(M("isMinimizable", EV(v != 0)));
 }
@@ -606,6 +649,7 @@ FLUTTER_PLUGIN_EXPORT int32_t mvd_is_maximizable(int64_t id) {
   return !window || window->IsMaximizable() ? 1 : 0;
 }
 FLUTTER_PLUGIN_EXPORT void mvd_set_maximizable(int64_t id, int32_t v) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id))
     window->SetMaximizable(M("isMaximizable", EV(v != 0)));
 }
@@ -614,6 +658,7 @@ FLUTTER_PLUGIN_EXPORT int32_t mvd_is_closable(int64_t id) {
   return !window || window->IsClosable() ? 1 : 0;
 }
 FLUTTER_PLUGIN_EXPORT void mvd_set_closable(int64_t id, int32_t v) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id)) window->SetClosable(M("isClosable", EV(v != 0)));
 }
 FLUTTER_PLUGIN_EXPORT void mvd_start_dragging(int64_t id) {
@@ -639,6 +684,7 @@ FLUTTER_PLUGIN_EXPORT void mvd_set_visible_on_all_workspaces(int64_t, int32_t,
 FLUTTER_PLUGIN_EXPORT void mvd_set_badge_label(int64_t) {}
 FLUTTER_PLUGIN_EXPORT void mvd_set_ignore_mouse_events(int64_t id, int32_t ignore,
                                                        int32_t) {
+  const MvdDartCallScope dart_call;
   if (auto* window = Win(id))
     window->SetIgnoreMouseEvents(M("ignore", EV(ignore != 0)));
 }
