@@ -1812,47 +1812,47 @@ double MultiViewDesktop::GetOpacity() {
 
 void MultiViewDesktop::SetOpacity(const flutter::EncodableMap &args) {
     opacity_ = std::get<double>(args.at(flutter::EncodableValue("opacity")));
-    HWND hWnd = GetMainWindow();
-    if (!hWnd) {
-        return;
-    }
-    LONG ex_style = GetWindowLong(hWnd, GWL_EXSTYLE);
-    if (opacity_ < 0.999) {
-        SetWindowLong(hWnd, GWL_EXSTYLE, ex_style | WS_EX_LAYERED);
-        SetLayeredWindowAttributes(hWnd, 0, static_cast<BYTE>(255 * opacity_),
-                                   LWA_ALPHA);
-        return;
-    }
-    SetLayeredWindowAttributes(hWnd, 0, 255, LWA_ALPHA);
-    SetWindowLong(hWnd, GWL_EXSTYLE, ex_style & ~WS_EX_LAYERED);
-    if (is_popup_) {
+    ApplyLayeredStyle();
+    if (is_popup_ && opacity_ >= 0.999) {
         ApplyPopupShadowAndColor();
     }
 }
 
 void MultiViewDesktop::SetIgnoreMouseEvents(
         const flutter::EncodableMap &args) {
-    bool ignore = std::get<bool>(args.at(flutter::EncodableValue("ignore")));
+    ignore_mouse_events_ =
+            std::get<bool>(args.at(flutter::EncodableValue("ignore")));
+    ApplyLayeredStyle();
+}
 
-    HWND hwnd = GetMainWindow();
-    LONG ex_style = ::GetWindowLong(hwnd, GWL_EXSTYLE);
-    if (ignore) {
-        ex_style |= (WS_EX_TRANSPARENT | WS_EX_LAYERED);
-    } else {
-        ex_style &= ~WS_EX_TRANSPARENT;
-        if (opacity_ >= 0.999) {
-            ex_style &= ~WS_EX_LAYERED;
-        }
+// WS_EX_LAYERED serves both partial opacity and click-through, and it
+// suppresses the DWM shadow, so it is set only while either needs it.
+void MultiViewDesktop::ApplyLayeredStyle() {
+    HWND hWnd = GetMainWindow();
+    if (!hWnd) {
+        return;
     }
-    ::SetWindowLong(hwnd, GWL_EXSTYLE, ex_style);
+    const bool translucent = opacity_ < 0.999;
+    LONG ex_style = GetWindowLong(hWnd, GWL_EXSTYLE) &
+                    ~(WS_EX_LAYERED | WS_EX_TRANSPARENT);
+    if (translucent || ignore_mouse_events_) {
+        ex_style |= WS_EX_LAYERED;
+    }
+    if (ignore_mouse_events_) {
+        ex_style |= WS_EX_TRANSPARENT;
+    }
+    SetWindowLong(hWnd, GWL_EXSTYLE, ex_style);
+    if (ex_style & WS_EX_LAYERED) {
+        const BYTE alpha =
+                translucent ? static_cast<BYTE>(255 * opacity_) : BYTE{255};
+        SetLayeredWindowAttributes(hWnd, 0, alpha, LWA_ALPHA);
+    }
 }
 
 flutter::EncodableMap MultiViewDesktop::IsIgnoreMouseEvents() {
-    HWND hwnd = GetMainWindow();
-    const LONG ex_style = ::GetWindowLong(hwnd, GWL_EXSTYLE);
-    const bool ignore = (ex_style & WS_EX_TRANSPARENT) != 0;
     return flutter::EncodableMap{
-            {flutter::EncodableValue("ignore"),  flutter::EncodableValue(ignore)},
+            {flutter::EncodableValue("ignore"),
+             flutter::EncodableValue(ignore_mouse_events_)},
             {flutter::EncodableValue("forward"), flutter::EncodableValue(false)},
     };
 }

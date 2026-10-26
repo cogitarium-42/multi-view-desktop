@@ -117,6 +117,7 @@ class MultiViewDesktop {
   std::string title_bar_style_ = "normal";
   bool window_button_visibility_ = true;
   double opacity_ = 1;
+  bool ignore_mouse_events_ = false;
   int background_a_ = 0;
   int background_r_ = 0;
   int background_g_ = 0;
@@ -199,6 +200,7 @@ class MultiViewDesktop {
                           bool fallback);
 
   void ApplyWindowComposition();
+  void ApplyLayeredStyle();
   void ApplyPopupShadowAndColor();
 
   static FlutterDesktopEngineRef engine_;
